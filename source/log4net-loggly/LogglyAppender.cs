@@ -2,6 +2,7 @@
 using log4net.Core;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Timer = System.Timers;
 
 
@@ -44,7 +45,7 @@ namespace log4net.loggly
 			{
 				SendAllEvents(lstLogs.ToArray());
 			}
-			_sendBufferedLogs.sendBufferedLogsToLoggly(Config, Config.LogMode == "bulk/");
+			_sendBufferedLogs.sendBufferedLogsToLoggly(Config, IsBulkMode());
 		}
 
 		protected override void Append(LoggingEvent loggingEvent)
@@ -73,11 +74,11 @@ namespace log4net.loggly
 			}
 
 			//check if logMode is bulk or inputs
-			if (Config.LogMode == "bulk/")
+			if (IsBulkMode())
 			{
 				addToBulk(_formattedLog);
 			}
-			else if (Config.LogMode == "inputs/")
+			else if (IsInputsMode())
 			{
 				//sending _formattedLog to the async queue
 				LogglyAsync.PostMessage(_formattedLog, Config);
@@ -101,5 +102,26 @@ namespace log4net.loggly
 			LogglyAsync.PostMessage(bulkLog, Config);
 		}
 
-		}
-	}
+	    private bool IsBulkMode()
+	    {
+	        return Config.LogMode == "bulk/";
+	    }
+
+	    private bool IsInputsMode()
+	    {
+	        return Config.LogMode == "inputs/";
+	    }
+
+	    protected override void OnClose()
+	    {
+	        if (IsBulkMode() && lstLogs.Any())
+	        {
+	            SendAllEvents(lstLogs.ToArray());
+	        }
+
+	        LogglyAsync.Flush();
+
+	        base.OnClose();
+	    }
+    }
+}
