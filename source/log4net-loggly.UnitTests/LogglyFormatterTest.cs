@@ -1,4 +1,6 @@
-﻿namespace log4net_loggly.UnitTests
+﻿using System.Globalization;
+
+namespace log4net_loggly.UnitTests
 {
     using System;
     using FluentAssertions;
@@ -126,7 +128,7 @@
                 DateTime voidDateTime;
 
                 timestamp.Should().NotBeNullOrEmpty("because the timestamp property should always be set");
-                DateTime.TryParse(timestamp, out voidDateTime).Should().BeTrue("because the timestamp should always be a valid date");
+                DateTime.TryParse(timestamp, new DateTimeFormatInfo(), DateTimeStyles.None, out voidDateTime).Should().BeTrue("because the timestamp should always be a valid date");
             }
 
             [Fact]
